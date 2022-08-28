@@ -9,6 +9,7 @@ namespace eCommerce.Repositories.Interfaces
     {
         public List<T> Get();
         public T GetById(int id);
+        public List<T> Lixeira();
         public void Create(T usuario);
         public void Update(T id);
         public void Delete(int id);

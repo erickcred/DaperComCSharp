@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using eCommerce.Models;
 using eCommerce.Repository;
+using eCommerce.Repositories.Interfaces;
 
 namespace eCommerce.Controllers
 {
@@ -8,28 +9,42 @@ namespace eCommerce.Controllers
     [ApiController]
     public class UsuarioController : ControllerBase
     {
+        private IRepository<Usuario> _usuarioRepository;
+
+        public UsuarioController()
+        {
+            _usuarioRepository = new UsuarioRepository();
+        }
 
         [HttpGet]
         public IActionResult Get()
         {
-            UsuarioRepository usuarios = new UsuarioRepository();
-
-            return Ok(usuarios.Get());
+            return Ok(_usuarioRepository.Get());
         }
 
         [HttpGet("{id}")]
         public IActionResult GetById(int id)
         {
-            var usuarios = new UsuarioRepository();
+            var usuario = _usuarioRepository.GetById(id);
+            if (usuario != null)
+                return Ok(_usuarioRepository.GetById(id));
+            return NotFound(new
+            {
+                title = "Usuario não encontrado!",
+                status = 404
+            });
+        }
 
-            return Ok(usuarios.GetById(id));
+        [HttpGet("lixeira")]
+        public IActionResult Lixeira()
+        {
+            return Ok(_usuarioRepository.Lixeira());
         }
 
         [HttpPost]
         public IActionResult Create(Usuario usuario)
         {
-            UsuarioRepository usuarios = new UsuarioRepository();
-            usuarios.Create(usuario);
+            _usuarioRepository.Create(usuario);
 
             return Ok(usuario);
         }
@@ -37,19 +52,26 @@ namespace eCommerce.Controllers
         [HttpPut]
         public IActionResult Update(Usuario usuario)
         {
-            UsuarioRepository usuarios = new UsuarioRepository();
-            usuarios.Update(usuario);
+            _usuarioRepository.Update(usuario);
             return Ok(usuario);
         }
 
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
-            UsuarioRepository usuarios = new UsuarioRepository();
-            var usuario = usuarios.GetById(id);
-            usuarios.Delete(usuario.Id);
-            
-            return Ok(usuario);
+            var usuario = _usuarioRepository.GetById(id);
+            if (usuario != null)
+            {
+                _usuarioRepository.Delete(usuario.Id);
+                return Ok(usuario);
+            } else
+            {
+                return NotFound(new
+                {
+                    title = "Usuario não encontrado!",
+                    status = 404
+                });
+            }
         }
     }
 }
