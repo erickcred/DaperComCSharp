@@ -73,9 +73,9 @@ INSERT INTO
     [Usuario]
     ([Nome], [Email], [RG], [CPF], [NomeMae], [SituacaoCdastro], [DataCadastro])
 VALUES
-('Erick Rick', 'erick@teste.com', '91231231', '01212312311', 'Nome da Mae', 1, GETDATE()),
-('Jessica Pereira', 'jessica@teste.com', '91231232', '01212312312', 'Nome da Mae', 1, GETDATE()),
-('Maily Pereira', 'maily@teste.com', '91231233', '01212312313', 'Nome da Mae', 1, GETDATE())
+('Fulano da Silva', 'fulano@teste.com', '91231231', '01212312311', 'Nome da Mae', 1, GETDATE()),
+('Siclano de Oliveira', 'siclano@teste.com', '91231232', '01212312312', 'Nome da Mae', 1, GETDATE()),
+('Astoudo Petra', 'astoufo@teste.com', '91231233', '01212312313', 'Nome da Mae', 1, GETDATE())
 GO
 
  -- Procedures
