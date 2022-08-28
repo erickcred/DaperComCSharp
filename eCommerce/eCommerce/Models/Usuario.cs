@@ -16,7 +16,7 @@
         public byte SituacaoCadastro { get; set; }
         public DateTimeOffset DataCadastro { get; set; }
 
-        public Contato? Contato { get; set; }
+        public Contato Contato { get; set; }
 
 
     }

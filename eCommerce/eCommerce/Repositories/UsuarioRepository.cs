@@ -29,45 +29,88 @@ namespace eCommerce.Repository
         {
             string sqlSelect = @"
                 SELECT
-                    *
+                    [Usuario].*,
+                    [Contato].*
                 FROM
                     [Usuario]
+                    LEFT JOIN [Contato] ON [Contato].[UsuarioId] = [Usuario].[Id]
                 WHERE
-                    [SituacaoCadastro] = 1";
+                    [Usuario].[SituacaoCadastro] = 1
+                ORDER BY [Usuario].[Id] DESC";
 
-            return (List<Usuario>)_connection.Query<Usuario>(sqlSelect);
+            return (List<Usuario>)_connection.Query<Usuario, Contato, Usuario>(
+                sqlSelect,
+                (usuario, contato) =>
+                {
+                    if (contato == null)
+                    {
+                        usuario.Contato = null;
+                    } else
+                    {
+                        usuario.Contato = contato;
+                    }
+                    return usuario;
+                }, splitOn: "Id");
         }
 
         public Usuario GetById(int id)
         {
-            Usuario usuario = _connection.QueryFirstOrDefault<Usuario>("SELECT * FROM [Usuario] WHERE [Id] = @Id",
-                new
+            string querySql = @"SELECT
+                    [Usuario].*,
+                    [Contato].*
+                FROM
+                    [Usuario]
+                    LEFT JOIN [Contato] ON [Contato].[UsuarioId] = [Usuario].[Id]
+                WHERE [Usuario].[Id] = @Id";
+
+            var usuario = new Usuario();
+
+            var resultado = _connection.Query<Usuario, Contato, Usuario>(
+                querySql,
+                (resUsuario, contato) => 
                 {
-                    Id = id
-                });
+                    usuario = resUsuario;
+                    if (contato == null)
+                        resUsuario.Contato = null;
+                    resUsuario.Contato = contato; 
+                    return resUsuario; 
+                },
+                new { Id = id },
+                splitOn: "Id"
+                );
             return usuario;
-            
         }
 
         public void Create(Usuario usuario)
         {
-            _connection.Execute(@"
+            var id = _connection.QuerySingle<int>(@"
                 INSERT INTO
-                    [Usuario]
-                    ([Nome], [Email], [Sexo], [RG], [CPF], [NomeMae], [SituacaoCadastro], [DataCadastro])
+                    [Usuario]  ([Nome], [Email], [Sexo], [RG], [CPF], [NomeMae], [SituacaoCadastro], [DataCadastro])
                     OUTPUT INSERTED.[Id]
                 VALUES
-                    (@Nome, @Email, @Sexo, @RG, @CPF, @NomeMae, @SituacaoCadastro, GETDATE())",
-            new
-            {
-                usuario.Nome,
-                usuario.Email,
-                Sexo = usuario.Sexo.ToUpper(),
-                usuario.RG,
-                usuario.CPF,
-                usuario.NomeMae,
-                usuario.SituacaoCadastro
-            });
+                    (@Nome, @Email, @Sexo, @RG, @CPF, @NomeMae, @SituacaoCadastro, GETDATE());",
+                new
+                {
+                    usuario.Nome,
+                    usuario.Email,
+                    Sexo = usuario.Sexo.ToUpper(),
+                    usuario.RG,
+                    usuario.CPF,
+                    usuario.NomeMae,
+                    usuario.SituacaoCadastro,
+                });
+
+            _connection.Query<Contato>(@"
+                INSERT INTO
+                    [Contato] ([UsuarioId], [Telefone], [Celular])
+                VALUES
+                    (@UsuarioId, @Telefone, @Celular)",
+                new
+                {
+                    UsuarioId = id,
+                    Telefone = usuario.Contato.Telefone,
+                    Celular = usuario.Contato.Celular
+                });
         }
 
         public void Update(Usuario usuario)
@@ -76,32 +119,70 @@ namespace eCommerce.Repository
                 UPDATE
                     [Usuario]
                 SET
-                    [Nome] = @Nome, [Email] = @Email, [Sexo] = @Sexo, [RG] = @RG, [CPF] = @CPF, [NomeMae] = @NomeMae, [SituacaoCadastro] = @SituacaoCadastro
-                WHERE [Id] = @Id";
+                    [Nome] = @Nome,
+                    [Email] = @Email,
+                    [Sexo] = @Sexo,
+                    [RG] = @RG,
+                    [CPF] = @CPF,
+                    [NomeMae] = @NomeMae, 
+                    [SituacaoCadastro] = @SituacaoCadastro
+                WHERE [Id] = @Id;
+                UPDATE
+                    [Contato]
+                SET
+                    [UsuarioId] = @Id,
+                    [Telefone] = @Telefone,
+                    [Celular] = @Celular
+                WHERE [Id] = @ContatoId";
 
-            _connection.Query<Usuario>(sqlUpdate, new
+            try
             {
-                Id = usuario.Id,
-                Nome = usuario.Nome,
-                Email = usuario.Email,
-                Sexo = usuario.Sexo.ToUpper(),
-                RG = usuario.RG,
-                CPF = usuario.CPF,
-                NomeMae = usuario.NomeMae,
-                SituacaoCadastro = usuario.SituacaoCadastro,
-            });
+                _connection.QueryAsync<Usuario, Contato, Usuario>(
+                    sqlUpdate, 
+                    (resUsuario, contato) =>
+                    {
+                        resUsuario = usuario;
+                        resUsuario.Contato = contato;
+                        return resUsuario;
+                    },
+                    new
+                    {
+                        Id = usuario.Id,
+                        Nome = usuario.Nome,
+                        Email = usuario.Email,
+                        Sexo = usuario.Sexo.ToUpper(),
+                        RG = usuario.RG,
+                        CPF = usuario.CPF,
+                        NomeMae = usuario.NomeMae,
+                        SituacaoCadastro = usuario.SituacaoCadastro,
+                        ContatoId = usuario.Contato.Id,
+                        UsuarioId = usuario.Contato.UsuarioId,
+                        Telefone = usuario.Contato.Telefone,
+                        Celular = usuario.Contato.Celular
+                    });
+            } catch (Exception erro)
+            {
+                throw new Exception($"Erro: {erro.Message} \n----\nPilha: {erro.StackTrace} \n----\nTipo: {erro.GetType()} \n----\nInnerException: {erro.InnerException}");
+            }
         }
 
         public List<Usuario> Lixeira()
         {
-            return (List<Usuario>)_connection.Query<Usuario>(@"
-                SELECT
-                    *
-                FROM
-                    [Usuario]
-                WHERE
-                    [SituacaoCadastro] = 0
-            ");
+            return (List<Usuario>)_connection.Query<Usuario, Contato, Usuario>(
+                @" SELECT
+                        [Usuario].*,
+                        [Contato].*
+                    FROM
+                        [Usuario]
+                        LEFT JOIN [Contato] ON [Contato].[UsuarioId] = [Usuario].[Id]
+                    WHERE
+                        [SituacaoCadastro] = 0
+                    ORDER BY [Usuario].[Id] DESC",
+                (usuario, contato) =>
+                {
+                    usuario.Contato = contato;
+                    return usuario;
+                }, splitOn: "Id");
         }
 
         public void Delete(int id)

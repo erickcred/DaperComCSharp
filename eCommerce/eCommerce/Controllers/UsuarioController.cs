@@ -2,6 +2,7 @@
 using eCommerce.Models;
 using eCommerce.Repository;
 using eCommerce.Repositories.Interfaces;
+using System.Net;
 
 namespace eCommerce.Controllers
 {
@@ -28,11 +29,7 @@ namespace eCommerce.Controllers
             var usuario = _usuarioRepository.GetById(id);
             if (usuario != null)
                 return Ok(_usuarioRepository.GetById(id));
-            return NotFound(new
-            {
-                title = "Usuario não encontrado!",
-                status = 404
-            });
+            return NotFound();
         }
 
         [HttpGet("lixeira")]
@@ -42,7 +39,7 @@ namespace eCommerce.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create(Usuario usuario)
+        public IActionResult Create([FromBody]Usuario usuario)
         {
             _usuarioRepository.Create(usuario);
 
@@ -50,7 +47,7 @@ namespace eCommerce.Controllers
         }
 
         [HttpPut]
-        public IActionResult Update(Usuario usuario)
+        public IActionResult Update([FromBody] Usuario usuario)
         {
             _usuarioRepository.Update(usuario);
             return Ok(usuario);
@@ -66,11 +63,7 @@ namespace eCommerce.Controllers
                 return Ok(usuario);
             } else
             {
-                return NotFound(new
-                {
-                    title = "Usuario não encontrado!",
-                    status = 404
-                });
+                return NotFound();
             }
         }
     }
