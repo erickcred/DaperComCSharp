@@ -68,8 +68,17 @@ CREATE TABLE [UsuarioDepartamento] (
 );
 GO
 
- -- Procedures
+    -- Inserts
+INSERT INTO
+    [Usuario]
+    ([Nome], [Email], [RG], [CPF], [NomeMae], [SituacaoCdastro], [DataCadastro])
+VALUES
+('Erick Rick', 'erick@teste.com', '91231231', '01212312311', 'Nome da Mae', 1, GETDATE()),
+('Jessica Pereira', 'jessica@teste.com', '91231232', '01212312312', 'Nome da Mae', 1, GETDATE()),
+('Maily Pereira', 'maily@teste.com', '91231233', '01212312313', 'Nome da Mae', 1, GETDATE())
+GO
 
+ -- Procedures
 CREATE OR ALTER PROCEDURE spUsuarios
 AS
     SELECT

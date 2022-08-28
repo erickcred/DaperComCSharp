@@ -230,11 +230,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "E:\\DaperComCSharp\\eCommerce\\eCommerce\\eCommerce.csproj",
+      "projectUniqueName": "D:\\Estudo\\DaperComCSharp\\eCommerce\\eCommerce\\eCommerce.csproj",
       "projectName": "eCommerce",
-      "projectPath": "E:\\DaperComCSharp\\eCommerce\\eCommerce\\eCommerce.csproj",
+      "projectPath": "D:\\Estudo\\DaperComCSharp\\eCommerce\\eCommerce\\eCommerce.csproj",
       "packagesPath": "C:\\Users\\erick\\.nuget\\packages\\",
-      "outputPath": "E:\\DaperComCSharp\\eCommerce\\eCommerce\\obj\\",
+      "outputPath": "D:\\Estudo\\DaperComCSharp\\eCommerce\\eCommerce\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

@@ -1,11 +1,14 @@
-﻿using eCommerce.Repositories.Interfaces;
+﻿using System;
+using System.Linq;
+using eCommerce.Repositories.Interfaces;
 using eCommerce.Models;
+using System.Net.WebSockets;
 
 namespace eCommerce.Repository
 {
-    public class UsuarioRepository : IUsuarioRepository
+    public class UsuarioRepository : IRepository<Usuario>
     {
-        private List<Usuario> _dbUsuarios = new List<Usuario>()
+        private static List<Usuario> _dbUsuarios = new List<Usuario>()
             {
                 new Usuario() { Id = 1, Nome = "Erick Rick" },
                 new Usuario() { Id = 2, Nome = "Jessica Pereira" },
@@ -15,27 +18,47 @@ namespace eCommerce.Repository
 
         public List<Usuario> Get()
         {
-            throw new NotImplementedException();
+            return _dbUsuarios.ToList();
         }
 
         public Usuario GetById(int id)
         {
-            throw new NotImplementedException();
+            Usuario usuario = _dbUsuarios.FirstOrDefault(u => u.Id == id);
+            return usuario;
+            
         }
 
-        public Usuario Create(Usuario usuario)
+        public void Create(Usuario usuario)
         {
-            throw new NotImplementedException();
+            int id = 0;
+            foreach (var u in Get())
+            {
+                if (u.Id > 0)
+                {
+                    id = u.Id + 1;
+                    Console.WriteLine($"{id}");
+                } else
+                {
+                    id = 1;
+                }
+            }
+
+            usuario.Id = id;
+            _dbUsuarios.Add(usuario);
         }
 
-        public Usuario Update(Usuario usuario)
+        public void Update(Usuario usuario)
         {
-            throw new NotImplementedException();
+            Usuario update = _dbUsuarios.FirstOrDefault(u => u.Id == usuario.Id);
+            update.Nome = usuario.Nome;
         }
 
         public void Delete(int id)
         {
-
+            var usuario = _dbUsuarios.FirstOrDefault(u => u.Id == id);
+            _dbUsuarios.Remove(usuario);
+            if (usuario.Id == 0 || usuario == null)
+                throw new Exception("Unsuario não encontrado na base de dados");
         }
 
     }
