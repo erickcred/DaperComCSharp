@@ -1,4 +1,6 @@
-﻿namespace eCommerce.Models
+﻿using System;
+
+namespace eCommerce.Models
 {
     public class EnderecoEntrega
     {

@@ -1,3 +1,5 @@
+using System;
+
 namespace eCommerce.Models
 {
     public class Contato

@@ -1,9 +1,15 @@
-﻿namespace eCommerce.Models
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+
+namespace eCommerce.Models
 {
     public class Usuario
     {
         public Usuario()
         {
+            EnderecoEntregas = new List<EnderecoEntrega>();
+            Departamentos = new List<Departamento>();
         }
 
         public int Id { get; set; }
@@ -18,6 +24,8 @@
 
         public Contato Contato { get; set; }
 
+        public ICollection<EnderecoEntrega> EnderecoEntregas { get; set; }
+        public ICollection<Departamento> Departamentos { get; set; }
 
     }
 }
