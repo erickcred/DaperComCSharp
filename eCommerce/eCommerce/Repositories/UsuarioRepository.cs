@@ -5,6 +5,7 @@ using eCommerce.Repositories.Interfaces;
 using eCommerce.Models;
 using System.Net.WebSockets;
 using Microsoft.Data.SqlClient;
+using System.Linq.Expressions;
 
 namespace eCommerce.Repository
 {
@@ -83,34 +84,48 @@ namespace eCommerce.Repository
 
         public void Create(Usuario usuario)
         {
-            var id = _connection.QuerySingle<int>(@"
-                INSERT INTO
-                    [Usuario]  ([Nome], [Email], [Sexo], [RG], [CPF], [NomeMae], [SituacaoCadastro], [DataCadastro])
-                    OUTPUT INSERTED.[Id]
-                VALUES
-                    (@Nome, @Email, @Sexo, @RG, @CPF, @NomeMae, @SituacaoCadastro, GETDATE());",
-                new
+            var validaCpf = _connection.QuerySingleOrDefault<Usuario>("SELECT [CPF] FROM [Usuario] WHERE [CPF] = @CPF", new { CPF = usuario.CPF });
+            var validaEmail = _connection.QuerySingleOrDefault<Usuario>("SELECT [Email] FROM [Usuario] WHERE [Email] = @Email", new { Email = usuario.Email });
+            if (validaCpf == null)
+            {
+                if (validaEmail == null)
                 {
-                    usuario.Nome,
-                    usuario.Email,
-                    Sexo = usuario.Sexo.ToUpper(),
-                    usuario.RG,
-                    usuario.CPF,
-                    usuario.NomeMae,
-                    usuario.SituacaoCadastro,
-                });
+                    var id = _connection.QuerySingleOrDefault<int>(@"
+                        INSERT INTO
+                            [Usuario]  ([Nome], [Email], [Sexo], [RG], [CPF], [NomeMae], [SituacaoCadastro], [DataCadastro])
+                            OUTPUT INSERTED.[Id]
+                        VALUES
+                            (@Nome, @Email, @Sexo, @RG, @CPF, @NomeMae, @SituacaoCadastro, GETDATE());",
+                        new
+                        {
+                            usuario.Nome,
+                            usuario.Email,
+                            Sexo = usuario.Sexo.ToUpper(),
+                            usuario.RG,
+                            usuario.CPF,
+                            usuario.NomeMae,
+                            usuario.SituacaoCadastro,
+                        });
 
-            _connection.Query<Contato>(@"
-                INSERT INTO
-                    [Contato] ([UsuarioId], [Telefone], [Celular])
-                VALUES
-                    (@UsuarioId, @Telefone, @Celular)",
-                new
+                    _connection.Query<Contato>(@"
+                        INSERT INTO
+                            [Contato] ([UsuarioId], [Telefone], [Celular])
+                        VALUES
+                            (@UsuarioId, @Telefone, @Celular)",
+                        new
+                        {
+                            UsuarioId = id,
+                            Telefone = usuario.Contato.Telefone,
+                            Celular = usuario.Contato.Celular
+                        });
+                } else
                 {
-                    UsuarioId = id,
-                    Telefone = usuario.Contato.Telefone,
-                    Celular = usuario.Contato.Celular
-                });
+                    throw new Exception("Email já cadastrado");
+                }
+            } else
+            {
+                throw new Exception("CPF já cadastrado");
+            }
         }
 
         public void Update(Usuario usuario)

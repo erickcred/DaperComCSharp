@@ -41,9 +41,15 @@ namespace eCommerce.Controllers
         [HttpPost]
         public IActionResult Create([FromBody]Usuario usuario)
         {
-            _usuarioRepository.Create(usuario);
+            try
+            {
+                _usuarioRepository.Create(usuario);
 
-            return Ok(usuario);
+                return Ok(usuario);
+            } catch (Exception erro)
+            {
+                return NotFound(erro.Message);
+            }
         }
 
         [HttpPut]

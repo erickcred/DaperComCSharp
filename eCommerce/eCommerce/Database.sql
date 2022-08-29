@@ -12,7 +12,7 @@ CREATE TABLE [Usuario] (
     [RG] VARCHAR(10) NOT NULL,
     [CPF] VARCHAR(11) NOT NULL,
     [NomeMae] VARCHAR(100) NULL,
-    [SituacaoCdastro] BIT NOT NULL DEFAULT(1),
+    [SituacaoCadastro] BIT NOT NULL DEFAULT(1),
     [DataCadastro] DATETIME,
 
     CONSTRAINT [PK_Usuario] PRIMARY KEY([Id]),
@@ -70,7 +70,7 @@ GO
 
  -- Inserts
 INSERT INTO [Usuario]
-    ([Nome], [Email], [RG], [CPF], [NomeMae], [SituacaoCdastro], [DataCadastro])
+    ([Nome], [Email], [RG], [CPF], [NomeMae], [SituacaoCadastro], [DataCadastro])
 VALUES
 ('Fulano da Silva', 'fulano@teste.com', '91231231', '01212312311', 'Nome da Mae', 1, GETDATE()),
 ('Siclano de Oliveira', 'siclano@teste.com', '91231232', '01212312312', 'Nome da Mae', 1, GETDATE()),
