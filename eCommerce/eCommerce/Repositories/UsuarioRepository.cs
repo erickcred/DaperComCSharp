@@ -150,16 +150,12 @@ namespace eCommerce.Repository
                     [Celular] = @Celular
                 WHERE [Id] = @ContatoId";
 
+            var validaUsuario = GetById(usuario.Id);
+
             try
             {
-                _connection.QueryAsync<Usuario, Contato, Usuario>(
-                    sqlUpdate, 
-                    (resUsuario, contato) =>
-                    {
-                        resUsuario = usuario;
-                        resUsuario.Contato = contato;
-                        return resUsuario;
-                    },
+                _connection.QueryAsync<Usuario>(
+                    sqlUpdate,
                     new
                     {
                         Id = usuario.Id,
@@ -170,14 +166,14 @@ namespace eCommerce.Repository
                         CPF = usuario.CPF,
                         NomeMae = usuario.NomeMae,
                         SituacaoCadastro = usuario.SituacaoCadastro,
-                        ContatoId = usuario.Contato.Id,
+                        ContatoId = validaUsuario.Contato.Id,
                         UsuarioId = usuario.Contato.UsuarioId,
                         Telefone = usuario.Contato.Telefone,
                         Celular = usuario.Contato.Celular
                     });
             } catch (Exception erro)
             {
-                throw new Exception($"Erro: {erro.Message} \n----\nPilha: {erro.StackTrace} \n----\nTipo: {erro.GetType()} \n----\nInnerException: {erro.InnerException}");
+                throw new Exception($"Erro: {erro.Message} \n----\nPilha: {erro.StackTrace}");
             }
         }
 
