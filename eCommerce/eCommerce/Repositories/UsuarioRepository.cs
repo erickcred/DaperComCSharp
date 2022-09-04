@@ -6,18 +6,12 @@ using eCommerce.Models;
 using System.Net.WebSockets;
 using Microsoft.Data.SqlClient;
 using System.Linq.Expressions;
+using Microsoft.AspNetCore.Mvc.Routing;
 
 namespace eCommerce.Repository
 {
     public class UsuarioRepository : IRepository<Usuario>
     {
-        private static List<Usuario> _dbUsuarios = new List<Usuario>()
-            {
-                new Usuario() { Id = 1, Nome = "Erick Rick" },
-                new Usuario() { Id = 2, Nome = "Jessica Pereira" },
-                new Usuario() { Id = 3, Nome = "Maily Pereira" }
-            };
-
         private SqlConnection _connection;
         private readonly string connectionString = @"Data Source=localhost\SQLEXPRESS;Database=eCommerce;User ID=sa;Password=123;TrustServerCertificate=True;";
 
@@ -30,150 +24,153 @@ namespace eCommerce.Repository
         {
             string sqlSelect = @"
                 SELECT
-                    [Usuario].*,
-                    [Contato].*
+                    *
                 FROM
-                    [Usuario]
-                    LEFT JOIN [Contato] ON [Contato].[UsuarioId] = [Usuario].[Id]
+                    [Usuario] AS [Usuario]
+                    LEFT JOIN [Contato] AS [Contato] ON [Contato].[UsuarioId] = [Usuario].[Id]
+                    LEFT JOIN [EnderecoEntrega] AS [EnderecoEntrega] ON [EnderecoEntrega].[UsuarioId] = [Usuario].[Id]
                 WHERE
                     [Usuario].[SituacaoCadastro] = 1
                 ORDER BY [Usuario].[Id] DESC";
 
-            return (List<Usuario>)_connection.Query<Usuario, Contato, Usuario>(
+            var listaUsuarios = new List<Usuario>();
+
+            _connection.Query<Usuario, Contato, EnderecoEntrega, Usuario>(
                 sqlSelect,
-                (usuario, contato) =>
+                (usuario, contato, enderecoEntrega) =>
                 {
-                    if (contato == null)
+                    var us = listaUsuarios.FirstOrDefault(x => x.Id == usuario.Id);
+                    if (us == null)
                     {
-                        usuario.Contato = null;
+                        us = usuario;
+                        if (enderecoEntrega != null)
+                            us.EnderecoEntregas.Add(enderecoEntrega);
+
+                        us.Contato = contato;
+                        listaUsuarios.Add(us);
                     } else
                     {
-                        usuario.Contato = contato;
+                        us.EnderecoEntregas.Add(enderecoEntrega);
                     }
+
                     return usuario;
                 }, splitOn: "Id");
+            return listaUsuarios;
         }
 
         public Usuario GetById(int id)
         {
             string querySql = @"SELECT
-                    [Usuario].*,
-                    [Contato].*
+                    *
                 FROM
-                    [Usuario]
-                    LEFT JOIN [Contato] ON [Contato].[UsuarioId] = [Usuario].[Id]
+                    [Usuario] AS [Usuario]
+                    LEFT JOIN [Contato] AS [Contato] ON [Contato].[UsuarioId] = [Usuario].[Id]
+                    LEFT JOIN [EnderecoEntrega] AS [EnderecoEntrega] ON [EnderecoEntrega].[UsuarioId] = [Usuario].[Id]
                 WHERE [Usuario].[Id] = @Id";
 
-            var usuario = new Usuario();
+            var lista = new List<Usuario>();
 
-            var resultado = _connection.Query<Usuario, Contato, Usuario>(
+            var resultado = _connection.Query<Usuario, Contato, EnderecoEntrega, Usuario>(
                 querySql,
-                (resUsuario, contato) => 
+                (usuario, contato, enderecoEntrega) => 
                 {
-                    usuario = resUsuario;
-                    if (contato == null)
-                        resUsuario.Contato = null;
-                    resUsuario.Contato = contato; 
-                    return resUsuario; 
+                    var us = lista.FirstOrDefault(x => x.Id == id);
+                    if (us == null)
+                    {
+                        us = usuario;
+                        if (enderecoEntrega != null)
+                            us.EnderecoEntregas.Add(enderecoEntrega);
+
+                        us.Contato = contato;
+                        lista.Add(us);
+                    } else
+                    {
+                        us.EnderecoEntregas.Add(enderecoEntrega);
+                    }
+                        
+                    return usuario;
                 },
-                new { Id = id },
-                splitOn: "Id"
-                );
-            return usuario;
+                new { Id = id }, splitOn: "Id"
+                ).FirstOrDefault();
+            return resultado;
         }
 
         public void Create(Usuario usuario)
         {
             var validaCpf = _connection.QuerySingleOrDefault<Usuario>("SELECT [CPF] FROM [Usuario] WHERE [CPF] = @CPF", new { CPF = usuario.CPF });
             var validaEmail = _connection.QuerySingleOrDefault<Usuario>("SELECT [Email] FROM [Usuario] WHERE [Email] = @Email", new { Email = usuario.Email });
-            if (validaCpf == null)
-            {
-                if (validaEmail == null)
-                {
-                    var id = _connection.QuerySingleOrDefault<int>(@"
-                        INSERT INTO
-                            [Usuario]  ([Nome], [Email], [Sexo], [RG], [CPF], [NomeMae], [SituacaoCadastro], [DataCadastro])
-                            OUTPUT INSERTED.[Id]
-                        VALUES
-                            (@Nome, @Email, @Sexo, @RG, @CPF, @NomeMae, @SituacaoCadastro, GETDATE());",
-                        new
-                        {
-                            usuario.Nome,
-                            usuario.Email,
-                            Sexo = usuario.Sexo.ToUpper(),
-                            usuario.RG,
-                            usuario.CPF,
-                            usuario.NomeMae,
-                            usuario.SituacaoCadastro,
-                        });
+            if (validaCpf != null)
+                throw new Exception("CPF já cadastrado.");
+            if (validaEmail != null)
+                throw new Exception("E-mail já cadastrado.");
 
-                    _connection.Query<Contato>(@"
+            _connection.Open();
+            var transaction = _connection.BeginTransaction();
+
+            try
+            {
+                usuario.Id = _connection.QuerySingleOrDefault<int>(@"
+                    INSERT INTO
+                        [Usuario]  ([Nome], [Email], [Sexo], [RG], [CPF], [NomeMae], [SituacaoCadastro], [DataCadastro])
+                        --OUTPUT INSERTED.[Id]
+                    VALUES
+                        (@Nome, @Email, @Sexo, @RG, @CPF, @NomeMae, @SituacaoCadastro, GETDATE()); SELECT CAST(SCOPE_IDENTITY() AS INT);",
+                    usuario, transaction);
+
+                if (usuario.Contato != null)
+                {
+                    usuario.Contato.UsuarioId = usuario.Id;
+                    usuario.Contato.Id = _connection.QuerySingleOrDefault<int>(@"
                         INSERT INTO
                             [Contato] ([UsuarioId], [Telefone], [Celular])
                         VALUES
-                            (@UsuarioId, @Telefone, @Celular)",
-                        new
-                        {
-                            UsuarioId = id,
-                            Telefone = usuario.Contato.Telefone,
-                            Celular = usuario.Contato.Celular
-                        });
-                } else
-                {
-                    throw new Exception("Email já cadastrado");
+                            (@UsuarioId, @Telefone, @Celular); SELECT CAST(SCOPE_IDENTITY() AS INT);",
+                        usuario.Contato, transaction);
                 }
-            } else
+
+                transaction.Commit();
+                
+            } catch (Exception erro)
             {
-                throw new Exception("CPF já cadastrado");
+                transaction.Rollback(erro.Message);
+            } finally
+            {
+                _connection.Close();
             }
         }
 
         public void Update(Usuario usuario)
         {
-            string sqlUpdate = @"
-                UPDATE
-                    [Usuario]
-                SET
-                    [Nome] = @Nome,
-                    [Email] = @Email,
-                    [Sexo] = @Sexo,
-                    [RG] = @RG,
-                    [CPF] = @CPF,
-                    [NomeMae] = @NomeMae, 
-                    [SituacaoCadastro] = @SituacaoCadastro
-                WHERE [Id] = @Id;
-                UPDATE
-                    [Contato]
-                SET
-                    [UsuarioId] = @Id,
-                    [Telefone] = @Telefone,
-                    [Celular] = @Celular
-                WHERE [Id] = @ContatoId";
-
-            var validaUsuario = GetById(usuario.Id);
+            _connection.Open();
+            var transaction = _connection.BeginTransaction();
 
             try
             {
-                _connection.QueryAsync<Usuario>(
-                    sqlUpdate,
-                    new
-                    {
-                        Id = usuario.Id,
-                        Nome = usuario.Nome,
-                        Email = usuario.Email,
-                        Sexo = usuario.Sexo.ToUpper(),
-                        RG = usuario.RG,
-                        CPF = usuario.CPF,
-                        NomeMae = usuario.NomeMae,
-                        SituacaoCadastro = usuario.SituacaoCadastro,
-                        ContatoId = validaUsuario.Contato.Id,
-                        UsuarioId = usuario.Contato.UsuarioId,
-                        Telefone = usuario.Contato.Telefone,
-                        Celular = usuario.Contato.Celular
-                    });
+                string sqlUsuario = @" UPDATE
+                        [Usuario]
+                    SET
+                        [Nome] = @Nome,  [Email] = @Email, [Sexo] = @Sexo, [RG] = @RG, [CPF] = @CPF, [NomeMae] = @NomeMae, [SituacaoCadastro] = @SituacaoCadastro
+                    WHERE [Id] = @Id;";
+
+                string sqlContato = @" UPDATE
+                        [Contato]
+                    SET
+                        [UsuarioId] = @Id, [Telefone] = @Telefone, [Celular] = @Celular 
+                    WHERE [UsuarioId] = @Id";
+
+                _connection.Execute(sqlUsuario, usuario, transaction);
+
+                if (usuario.Contato != null)
+                    _connection.Execute(sqlContato, usuario.Contato, transaction);
+
+                transaction.Commit();
             } catch (Exception erro)
             {
-                throw new Exception($"Erro: {erro.Message} \n----\nPilha: {erro.StackTrace}");
+                transaction.Rollback();
+                throw erro;
+            } finally
+            {
+                _connection.Close();
             }
         }
 
@@ -196,9 +193,9 @@ namespace eCommerce.Repository
                 }, splitOn: "Id");
         }
 
-        public void Delete(int id)
+        public void Lixeira(int id)
         {
-            _connection.Query(@"
+            _connection.Execute(@"
                 UPDATE
                     [Usuario]
                 SET 
@@ -210,5 +207,28 @@ namespace eCommerce.Repository
             });
         }
 
+        public void Delete(int id)
+        {
+            _connection.Open();
+            var transaction = _connection.BeginTransaction();
+            try
+            {
+                _connection.Execute(
+                    @"DELETE FROM [Contato] WHERE [UsuarioId] = @Id;
+                        DELETE FROM [UsuarioDepartamento] WHERE [UsuarioId] = @Id;
+                        DELETE FROM [EnderecoEntrega] WHERE [UsuarioId] = @Id;
+                        DELETE FROM [Usuario] WHERE [Id] = @Id;",
+                    new { Id = id }, transaction);
+
+                transaction.Commit();
+            } catch (Exception erro)
+            {
+                transaction.Rollback();
+                throw new Exception(erro.Message);
+            } finally
+            {
+                _connection.Close();
+            }
+        }
     }
 }

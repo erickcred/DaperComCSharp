@@ -44,7 +44,6 @@ namespace eCommerce.Controllers
             try
             {
                 _usuarioRepository.Create(usuario);
-
                 return Ok(usuario);
             } catch (Exception erro)
             {
@@ -65,12 +64,20 @@ namespace eCommerce.Controllers
             var usuario = _usuarioRepository.GetById(id);
             if (usuario != null)
             {
-                _usuarioRepository.Delete(usuario.Id);
+                _usuarioRepository.Lixeira(usuario.Id);
                 return Ok(usuario);
             } else
             {
                 return NotFound();
             }
+        }
+
+        [HttpDelete("lixeira/{id}")]
+        public IActionResult DeletePermanente(int id)
+        {
+            var usuario = _usuarioRepository.GetById(id);
+            _usuarioRepository.Delete(usuario.Id);
+            return Ok(usuario);
         }
     }
 }

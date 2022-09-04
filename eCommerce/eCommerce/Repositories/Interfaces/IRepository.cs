@@ -12,6 +12,7 @@ namespace eCommerce.Repositories.Interfaces
         public List<T> Lixeira();
         public void Create(T usuario);
         public void Update(T id);
+        public void Lixeira(int id);
         public void Delete(int id);
     }
 }
