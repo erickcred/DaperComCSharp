@@ -7,6 +7,7 @@ using System.Net.WebSockets;
 using Microsoft.Data.SqlClient;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc.Routing;
+using System.Runtime.ConstrainedExecution;
 
 namespace eCommerce.Repository
 {
@@ -164,17 +165,28 @@ namespace eCommerce.Repository
                     SET
                         [Nome] = @Nome,  [Email] = @Email, [Sexo] = @Sexo, [RG] = @RG, [CPF] = @CPF, [NomeMae] = @NomeMae, [SituacaoCadastro] = @SituacaoCadastro
                     WHERE [Id] = @Id;";
+                _connection.Execute(sqlUsuario, usuario, transaction);
 
                 string sqlContato = @" UPDATE
                         [Contato]
                     SET
                         [UsuarioId] = @Id, [Telefone] = @Telefone, [Celular] = @Celular 
                     WHERE [UsuarioId] = @Id";
-
-                _connection.Execute(sqlUsuario, usuario, transaction);
-
                 if (usuario.Contato != null)
                     _connection.Execute(sqlContato, usuario.Contato, transaction);
+                
+                string sqlEndereco = @" UPDATE
+                        [EnderecoEntrega]
+                    SET 
+                        [UsuarioId] = @UsuarioId, [NomeEndereco] = @NomeEndereco, [CEP] = @CEP, [Estado] = @Estado, 
+                        [Cidade] = @Cidade, [Bairro] = @Bairro, [Endereco] = @Endereco, [Numero] = @Numero, 
+                        [Complemento] = @Complemento
+                    WHERE [Id] = @Id";
+                foreach (var endereco in usuario.EnderecoEntregas)
+                {
+                    endereco.UsuarioId = usuario.Id;
+                    _connection.Execute(sqlEndereco, endereco, transaction);
+                }
 
                 transaction.Commit();
             } catch (Exception erro)
