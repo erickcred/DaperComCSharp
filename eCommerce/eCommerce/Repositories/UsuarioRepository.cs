@@ -24,34 +24,45 @@ namespace eCommerce.Repository
         {
             string sqlSelect = @"
                 SELECT
-                    *
+                    [Usuario].*,
+                    [Contato].*,
+                    [EnderecoEntrega].*,
+                    [Departamento].*
                 FROM
                     [Usuario] AS [Usuario]
-                    LEFT JOIN [Contato] AS [Contato] ON [Contato].[UsuarioId] = [Usuario].[Id]
-                    LEFT JOIN [EnderecoEntrega] AS [EnderecoEntrega] ON [EnderecoEntrega].[UsuarioId] = [Usuario].[Id]
+                    LEFT JOIN [Contato] ON [Contato].[UsuarioId] = [Usuario].[Id]
+                    LEFT JOIN [EnderecoEntrega] ON [EnderecoEntrega].[UsuarioId] = [Usuario].[Id]
+                    LEFT JOIN [UsuarioDepartamento] ON [UsuarioDepartamento].[UsuarioId] = [Usuario].[Id]
+                    LEFT JOIN [Departamento] ON [Departamento].[Id] = [UsuarioDepartamento].[DepartamentoId]
                 WHERE
                     [Usuario].[SituacaoCadastro] = 1
                 ORDER BY [Usuario].[Id] DESC";
 
             var listaUsuarios = new List<Usuario>();
 
-            _connection.Query<Usuario, Contato, EnderecoEntrega, Usuario>(
+            _connection.Query<Usuario, Contato, EnderecoEntrega, Departamento, Usuario>(
                 sqlSelect,
-                (usuario, contato, enderecoEntrega) =>
+                (usuario, contato, enderecoEntrega, departamento) =>
                 {
-                    var us = listaUsuarios.FirstOrDefault(x => x.Id == usuario.Id);
-                    if (us == null)
+                    //var us = listaUsuarios.FirstOrDefault(x => x.Id == usuario.Id);
+                    if (listaUsuarios.FirstOrDefault(x => x.Id == usuario.Id) == null)
                     {
-                        us = usuario;
-                        if (enderecoEntrega != null)
-                            us.EnderecoEntregas.Add(enderecoEntrega);
-
-                        us.Contato = contato;
-                        listaUsuarios.Add(us);
+                        usuario.Contato = contato;
+                        listaUsuarios.Add(usuario);
+                        usuario.Contato = contato;
                     } else
                     {
-                        us.EnderecoEntregas.Add(enderecoEntrega);
+                        usuario = listaUsuarios.FirstOrDefault(x => x.Id == usuario.Id);
                     }
+
+                    if (usuario.EnderecoEntregas.FirstOrDefault(x => x.Id == enderecoEntrega.Id) == null)
+                    {
+                        usuario.EnderecoEntregas.Add(enderecoEntrega);
+                    }
+                    
+                    if (usuario.Departamentos.FirstOrDefault(x => x.Id == departamento.Id) == null)
+                    usuario.Departamentos.Add(departamento);
+
 
                     return usuario;
                 }, splitOn: "Id");
