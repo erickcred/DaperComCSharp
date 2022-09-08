@@ -7,6 +7,7 @@ using System.Net.WebSockets;
 using Microsoft.Data.SqlClient;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc.Routing;
+using System.Runtime.ConstrainedExecution;
 
 namespace eCommerce.Repository
 {
@@ -88,7 +89,7 @@ namespace eCommerce.Repository
                     var us = lista.FirstOrDefault(x => x.Id == id);
                     if (us == null)
                     {
-                        us = usuario;
+                       us = usuario;
                         if (enderecoEntrega != null)
                             us.EnderecoEntregas.Add(enderecoEntrega);
 
@@ -139,6 +140,19 @@ namespace eCommerce.Repository
                         usuario.Contato, transaction);
                 }
 
+                if (usuario.EnderecoEntregas != null && usuario.EnderecoEntregas.Count() > 0)
+                {
+                    string sqlEndereco = @"INSERT INTO [EnderecoEntrega]
+                            ([UsuarioId], [NomeEndereco], [CEP], [Estado], [Cidade], [Bairro], [Endereco], [Numero], [Complemento])
+                        VALUES (@UsuarioId, @NomeEndereco, @CEP, @Estado, @Cidade, @Bairro, @Endereco, @Numero, @Complemento);
+                        SELECT CAST(SCOPE_IDENTITY() AS INT);";
+                    foreach (var endereco in usuario.EnderecoEntregas)
+                    {
+                        endereco.UsuarioId = usuario.Id;
+                        endereco.Id = _connection.Query<int>(sqlEndereco, endereco, transaction).Single();
+                    }
+                }
+
                 transaction.Commit();
                 
             } catch (Exception erro)
@@ -162,17 +176,28 @@ namespace eCommerce.Repository
                     SET
                         [Nome] = @Nome,  [Email] = @Email, [Sexo] = @Sexo, [RG] = @RG, [CPF] = @CPF, [NomeMae] = @NomeMae, [SituacaoCadastro] = @SituacaoCadastro
                     WHERE [Id] = @Id;";
+                _connection.Execute(sqlUsuario, usuario, transaction);
 
                 string sqlContato = @" UPDATE
                         [Contato]
                     SET
                         [UsuarioId] = @Id, [Telefone] = @Telefone, [Celular] = @Celular 
                     WHERE [UsuarioId] = @Id";
-
-                _connection.Execute(sqlUsuario, usuario, transaction);
-
                 if (usuario.Contato != null)
                     _connection.Execute(sqlContato, usuario.Contato, transaction);
+                
+                string sqlEndereco = @" UPDATE
+                        [EnderecoEntrega]
+                    SET 
+                        [UsuarioId] = @UsuarioId, [NomeEndereco] = @NomeEndereco, [CEP] = @CEP, [Estado] = @Estado, 
+                        [Cidade] = @Cidade, [Bairro] = @Bairro, [Endereco] = @Endereco, [Numero] = @Numero, 
+                        [Complemento] = @Complemento
+                    WHERE [Id] = @Id";
+                foreach (var endereco in usuario.EnderecoEntregas)
+                {
+                    endereco.UsuarioId = usuario.Id;
+                    _connection.Execute(sqlEndereco, endereco, transaction);
+                }
 
                 transaction.Commit();
             } catch (Exception erro)
@@ -187,21 +212,36 @@ namespace eCommerce.Repository
 
         public List<Usuario> Lixeira()
         {
-            return (List<Usuario>)_connection.Query<Usuario, Contato, Usuario>(
+            var lista = new List<Usuario>();
+            _connection.Query<Usuario, Contato, EnderecoEntrega, Usuario>(
                 @" SELECT
                         [Usuario].*,
-                        [Contato].*
+                        [Contato].*,
+                        [EnderecoEntrega].*
                     FROM
                         [Usuario]
                         LEFT JOIN [Contato] ON [Contato].[UsuarioId] = [Usuario].[Id]
+                        LEFT JOIN [EnderecoEntrega] ON [EnderecoEntrega].[UsuarioId] = [Usuario].[Id]
                     WHERE
                         [SituacaoCadastro] = 0
                     ORDER BY [Usuario].[Id] DESC",
-                (usuario, contato) =>
+                (usuario, contato, enderecoEntrega) =>
                 {
-                    usuario.Contato = contato;
+                    if (lista.FirstOrDefault(x => x.Id == usuario.Id) == null)
+                    {
+                        lista.Add(usuario);
+                        if (enderecoEntrega != null)
+                            usuario.EnderecoEntregas.Add(enderecoEntrega);
+                        usuario.Contato = contato;
+                    } else
+                    {
+                        usuario = lista.FirstOrDefault(x => x.Id == usuario.Id);
+                    }
+
+
                     return usuario;
                 }, splitOn: "Id");
+            return lista;
         }
 
         public void Lixeira(int id)
