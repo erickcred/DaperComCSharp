@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections;
-using System.ComponentModel.DataAnnotations.Schema;
+using Dapper.Contrib.Extensions;
 
 namespace eCommerce.Models
 {
@@ -12,6 +12,7 @@ namespace eCommerce.Models
             
         }
 
+        [Key]
         public int Id { get; set; }
         public string Nome { get; set; }
 

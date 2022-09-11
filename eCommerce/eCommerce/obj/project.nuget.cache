@@ -1,12 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "EplND1y6DMrnuiV/XP/xzz44kKNSyBCG4vlJGurnlBk1BufQn0c2lAiNP5BgXzOKRaYQTix5kSMDtbs4pqYYWw==",
+  "dgSpecHash": "D46nSiPZ+/eKhoV5hFKkqVfyEiQbAvsVGnziXhCxhQMmbyEYsscQfn93SItauwzsLDJckAbyKZp7aroL0+izyw==",
   "success": true,
   "projectFilePath": "D:\\Estudo\\DapperComCSharp\\eCommerce\\eCommerce\\eCommerce.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\erick\\.nuget\\packages\\azure.core\\1.24.0\\azure.core.1.24.0.nupkg.sha512",
     "C:\\Users\\erick\\.nuget\\packages\\azure.identity\\1.6.0\\azure.identity.1.6.0.nupkg.sha512",
     "C:\\Users\\erick\\.nuget\\packages\\dapper\\2.0.123\\dapper.2.0.123.nupkg.sha512",
+    "C:\\Users\\erick\\.nuget\\packages\\dapper.contrib\\2.0.78\\dapper.contrib.2.0.78.nupkg.sha512",
     "C:\\Users\\erick\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\1.1.1\\microsoft.bcl.asyncinterfaces.1.1.1.nupkg.sha512",
     "C:\\Users\\erick\\.nuget\\packages\\microsoft.csharp\\4.5.0\\microsoft.csharp.4.5.0.nupkg.sha512",
     "C:\\Users\\erick\\.nuget\\packages\\microsoft.data.sqlclient\\5.0.0\\microsoft.data.sqlclient.5.0.0.nupkg.sha512",
