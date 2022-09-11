@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "E:\\DapperComCSharp\\eCommerce\\eCommerce\\eCommerce.csproj": {}
+    "D:\\Estudo\\DapperComCSharp\\eCommerce\\eCommerce\\eCommerce.csproj": {}
   },
   "projects": {
-    "E:\\DapperComCSharp\\eCommerce\\eCommerce\\eCommerce.csproj": {
+    "D:\\Estudo\\DapperComCSharp\\eCommerce\\eCommerce\\eCommerce.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\DapperComCSharp\\eCommerce\\eCommerce\\eCommerce.csproj",
+        "projectUniqueName": "D:\\Estudo\\DapperComCSharp\\eCommerce\\eCommerce\\eCommerce.csproj",
         "projectName": "eCommerce",
-        "projectPath": "E:\\DapperComCSharp\\eCommerce\\eCommerce\\eCommerce.csproj",
+        "projectPath": "D:\\Estudo\\DapperComCSharp\\eCommerce\\eCommerce\\eCommerce.csproj",
         "packagesPath": "C:\\Users\\erick\\.nuget\\packages\\",
-        "outputPath": "E:\\DapperComCSharp\\eCommerce\\eCommerce\\obj\\",
+        "outputPath": "D:\\Estudo\\DapperComCSharp\\eCommerce\\eCommerce\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
